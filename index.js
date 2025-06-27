@@ -75,8 +75,18 @@ function getMDNLink(code) {
 
 // Main status code endpoint
 app.all('/:code', async (req, res, next) => {
-  // Skip if this is /random or /echo or /health or /docs or root
-  if (['random', 'echo', 'health', 'docs', ''].includes(req.params.code))
+  // Skip if this is /random, /echo, /health, /docs, /openapi.json, /openapi.yaml, or root
+  if (
+    [
+      'random',
+      'echo',
+      'health',
+      'docs',
+      'openapi.json',
+      'openapi.yaml',
+      '',
+    ].includes(req.params.code)
+  )
     return next()
 
   const { code } = req.params
