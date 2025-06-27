@@ -1,0 +1,134 @@
+openapi: 3.0.0
+info:
+  title: httpstatus Node.js API
+  version: 1.0.0
+  description: |
+    Minimalist API to simulate HTTP status codes, delays, random codes, redirects, and more.
+servers:
+  - url: http://localhost:3000
+paths:
+  /:
+    get:
+      summary: Service documentation
+      responses:
+        '200':
+          description: Plain text documentation
+          content:
+            text/plain:
+              schema:
+                type: string
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Always returns OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /echo:
+    get:
+      summary: Echo request info
+      responses:
+        '200':
+          description: Returns request info
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      summary: Echo request info (with body)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Returns request info
+          content:
+            application/json:
+              schema:
+                type: object
+  /{code}:
+    get:
+      summary: Return specified HTTP status code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: sleep
+          schema:
+            type: integer
+        - in: query
+          name: body
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+        '4XX':
+          description: Client error
+        '5XX':
+          description: Server error
+    post:
+      summary: Return specified HTTP status code with custom body
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: sleep
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Success
+  /random/{range}:
+    get:
+      summary: Return a random HTTP status code from a list or range
+      parameters:
+        - in: path
+          name: range
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: sleep
+          schema:
+            type: integer
+        - in: query
+          name: body
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+  /redirect/{code}:
+    get:
+      summary: Redirect to a URL with the specified status code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: to
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect
