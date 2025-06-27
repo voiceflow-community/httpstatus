@@ -89,9 +89,13 @@ app.all('/:code', async (req, res, next) => {
   )
     return next()
 
+  const startTimeObj = new Date()
+  const startTime = startTimeObj.toISOString()
   const { code } = req.params
   const { sleep, body: bodyParam } = req.query
   const statusCode = Number(code)
+  const requestedCode = code // as string
+  const definition = getStatusDescription(statusCode)
 
   if (!isValidStatusCode(statusCode)) {
     return res.status(400).send('Invalid HTTP status code')
@@ -120,6 +124,10 @@ app.all('/:code', async (req, res, next) => {
 
   // Content negotiation
   const accept = req.headers['accept'] || ''
+  const replyTimeObj = new Date()
+  const replyTime = replyTimeObj.toISOString()
+  const duration_in_ms = replyTimeObj - startTimeObj // ms
+  const duration_in_seconds = duration_in_ms / 1000
   if (customBody !== undefined) {
     if (typeof customBody === 'object') {
       res.status(statusCode).json(customBody)
@@ -129,19 +137,19 @@ app.all('/:code', async (req, res, next) => {
     return
   }
 
-  if (accept.includes('application/json')) {
-    res.status(statusCode).json({
-      code: statusCode,
-      description: res.statusMessage || '',
-      details: getStatusDescription(statusCode),
-      mdn: getMDNLink(statusCode),
-    })
-  } else {
-    res
-      .status(statusCode)
-      .type('text/plain')
-      .send(`${statusCode} ${res.statusMessage || ''}`.trim())
-  }
+  // Always respond with JSON if no custom body
+  res.status(statusCode).json({
+    code: statusCode,
+    requestedCode,
+    description: res.statusMessage || '',
+    definition,
+    details: getStatusDescription(statusCode),
+    mdn: getMDNLink(statusCode),
+    startTime,
+    replyTime,
+    duration_in_ms,
+    duration_in_seconds,
+  })
 })
 
 // Helper to parse range strings like '200,201,500-504'
@@ -174,6 +182,8 @@ function parseStatusCodeRange(rangeStr) {
 
 // /random/:range endpoint
 app.all('/random/:range', async (req, res) => {
+  const startTimeObj = new Date()
+  const startTime = startTimeObj.toISOString()
   const { range } = req.params
   const { sleep, body: bodyParam } = req.query
   const codes = parseStatusCodeRange(range)
@@ -184,6 +194,8 @@ app.all('/random/:range', async (req, res) => {
 
   // Pick a random code
   const statusCode = codes[Math.floor(Math.random() * codes.length)]
+  const requestedCode = range // as string
+  const definition = getStatusDescription(statusCode)
 
   // Optional delay
   if (sleep) {
@@ -207,6 +219,10 @@ app.all('/random/:range', async (req, res) => {
 
   // Content negotiation
   const accept = req.headers['accept'] || ''
+  const replyTimeObj = new Date()
+  const replyTime = replyTimeObj.toISOString()
+  const duration_in_ms = replyTimeObj - startTimeObj // ms
+  const duration_in_seconds = duration_in_ms / 1000
   if (customBody !== undefined) {
     if (typeof customBody === 'object') {
       res.status(statusCode).json(customBody)
@@ -216,19 +232,19 @@ app.all('/random/:range', async (req, res) => {
     return
   }
 
-  if (accept.includes('application/json')) {
-    res.status(statusCode).json({
-      code: statusCode,
-      description: res.statusMessage || '',
-      details: getStatusDescription(statusCode),
-      mdn: getMDNLink(statusCode),
-    })
-  } else {
-    res
-      .status(statusCode)
-      .type('text/plain')
-      .send(`${statusCode} ${res.statusMessage || ''}`.trim())
-  }
+  // Always respond with JSON if no custom body
+  res.status(statusCode).json({
+    code: statusCode,
+    requestedCode,
+    description: res.statusMessage || '',
+    definition,
+    details: getStatusDescription(statusCode),
+    mdn: getMDNLink(statusCode),
+    startTime,
+    replyTime,
+    duration_in_ms,
+    duration_in_seconds,
+  })
 })
 
 // Health check endpoint

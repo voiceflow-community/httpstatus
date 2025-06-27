@@ -15,6 +15,8 @@ A minimalist Node.js web service for simulating HTTP responses, inspired by [htt
 - **Rate Limiting:** Configurable per-IP rate limiting.
 - **OpenAPI Docs:** Interactive API docs at `/docs`.
 - **Status Code Descriptions:** JSON responses include details and MDN links.
+- **JSON by Default:** `/[code]` and `/random/{range}` endpoints always return JSON unless a custom response body is provided.
+- **Timing Info:** JSON responses include `startTime`, `replyTime`, `duration_in_ms`, and `duration_in_seconds`.
 
 ---
 
@@ -63,13 +65,31 @@ docker-compose up --build
 ## Usage
 
 ### Status Code Endpoint
-- `GET /404` — Returns HTTP 404 Not Found
-- `GET /200?sleep=1000` — Returns 200 OK after 1 second
+- `GET /404` — Returns HTTP 404 Not Found as JSON
+- `GET /200?sleep=1000` — Returns 200 OK as JSON after 1 second
 - `GET /500?body={"error":"fail"}` — Returns custom JSON body
 - `POST /201` with JSON body — Returns custom body with 201 status
 
 ### Random Status Code
-- `GET /random/200,201,500-504` — Returns a random code from the list/range
+- `GET /random/200,201,500-504` — Returns a random code from the list/range as JSON
+
+> **Note:** By default, `/[code]` and `/random/{range}` endpoints always return JSON unless a custom response body is provided (via `?body=` or POST body).
+
+#### Example JSON Response
+```json
+{
+  "code": 200,
+  "requestedCode": "200",
+  "description": "OK",
+  "definition": "OK: The request has succeeded.",
+  "details": "OK: The request has succeeded.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200",
+  "startTime": "2025-06-27T12:00:00.000Z",
+  "replyTime": "2025-06-27T12:00:01.005Z",
+  "duration_in_ms": 1005,
+  "duration_in_seconds": 1.005
+}
+```
 
 ### Redirect
 - `GET /redirect/302?to=https://example.com` — Redirects with 302 status
@@ -92,8 +112,8 @@ docker-compose up --build
 
 | Endpoint                | Description                                              |
 |------------------------|----------------------------------------------------------|
-| `/[code]`              | Returns the specified HTTP status code                   |
-| `/random/{range}`      | Returns a random status code from a list or range        |
+| `/[code]`              | Returns the specified HTTP status code (JSON by default) |
+| `/random/{range}`      | Returns a random status code from a list or range (JSON) |
 | `/redirect/{code}`     | Redirects to a URL with the specified status code        |
 | `/echo`                | Returns request details                                  |
 | `/health`              | Health check (always 200 OK)                             |
