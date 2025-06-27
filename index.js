@@ -123,7 +123,6 @@ app.all('/:code', async (req, res, next) => {
   }
 
   // Content negotiation
-  const accept = req.headers['accept'] || ''
   const replyTimeObj = new Date()
   const replyTime = replyTimeObj.toISOString()
   const duration_in_ms = replyTimeObj - startTimeObj // ms
@@ -218,7 +217,6 @@ app.all('/random/:range', async (req, res) => {
   }
 
   // Content negotiation
-  const accept = req.headers['accept'] || ''
   const replyTimeObj = new Date()
   const replyTime = replyTimeObj.toISOString()
   const duration_in_ms = replyTimeObj - startTimeObj // ms
