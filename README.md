@@ -1,6 +1,7 @@
 # httpstatus Node.js Service
 
-A minimalist Node.js web service for simulating HTTP responses, inspired by [httpstat.us](https://httpstat.us). Useful for testing client-side error handling, API integrations, and network conditions.
+A minimalist Node.js web service for simulating HTTP responses, inspired by [httpstat.us](https://httpstat.us).
+Useful for testing client-side error handling, API integrations and timeouts in Voiceflow agents.
 
 ---
 
