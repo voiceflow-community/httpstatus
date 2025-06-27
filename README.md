@@ -34,10 +34,13 @@ npm install
 Create a `.env` file in the project root:
 ```
 PORT=3000
-RATE_LIMIT_WINDOW_MINUTES=15  # (optional) Window in minutes for rate limiting
-RATE_LIMIT_MAX=100            # (optional) Max requests per window per IP
+DOMAIN=https://your.domain.com   # (optional) Used for OpenAPI docs server URL
+RATE_LIMIT_WINDOW_MINUTES=15     # (optional) Window in minutes for rate limiting
+RATE_LIMIT_MAX=100               # (optional) Max requests per window per IP
 ```
-Change the port and rate limit values as needed.
+- `PORT`: The port the service will listen on (default: 3000)
+- `DOMAIN`: (Optional) The domain or base URL to use in the OpenAPI docs. If not set, defaults to `http://localhost:PORT`.
+- `RATE_LIMIT_WINDOW_MINUTES` and `RATE_LIMIT_MAX`: Rate limiting configuration.
 
 ### 3. Run the Server
 ```sh
@@ -136,7 +139,8 @@ docker-compose up --build
 ## OpenAPI Documentation
 - Interactive docs available at [`/docs`](http://localhost:3000/docs) (port may vary).
 - Raw OpenAPI spec available at [`/openapi.json`](http://localhost:3000/openapi.json) and [`/openapi.yaml`](http://localhost:3000/openapi.yaml).
-- The docs always reflect the current server port.
+- **The server URL in the docs is set by the `DOMAIN` variable in `.env` if provided, otherwise defaults to `http://localhost:PORT`.**
+- The docs always reflect the current server port or domain.
 
 ---
 

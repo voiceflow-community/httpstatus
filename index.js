@@ -73,29 +73,11 @@ function getMDNLink(code) {
   return `https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/${code}`
 }
 
-// Main status code endpoint
-app.all('/:code', async (req, res, next) => {
-  // Skip if this is /random, /echo, /health, /docs, /openapi.json, /openapi.yaml, or root
-  if (
-    [
-      'random',
-      'echo',
-      'health',
-      'docs',
-      'openapi.json',
-      'openapi.yaml',
-      '',
-    ].includes(req.params.code)
-  )
-    return next()
-
+async function handleStatusResponse(req, res, options) {
   const startTimeObj = new Date()
   const startTime = startTimeObj.toISOString()
-  const { code } = req.params
+  const { statusCode, requestedCode, definition, description, mdn } = options
   const { sleep, body: bodyParam } = req.query
-  const statusCode = Number(code)
-  const requestedCode = code // as string
-  const definition = getStatusDescription(statusCode)
 
   if (!isValidStatusCode(statusCode)) {
     return res.status(400).send('Invalid HTTP status code')
@@ -112,7 +94,6 @@ app.all('/:code', async (req, res, next) => {
   // Custom response body
   let customBody
   if (bodyParam !== undefined) {
-    // Try to parse as JSON, fallback to string
     customBody = tryParseJSON(bodyParam) ?? bodyParam
   } else if (
     ['POST', 'PUT', 'PATCH'].includes(req.method) &&
@@ -122,11 +103,11 @@ app.all('/:code', async (req, res, next) => {
     customBody = req.body
   }
 
-  // Content negotiation
   const replyTimeObj = new Date()
   const replyTime = replyTimeObj.toISOString()
   const duration_in_ms = replyTimeObj - startTimeObj // ms
   const duration_in_seconds = duration_in_ms / 1000
+
   if (customBody !== undefined) {
     if (typeof customBody === 'object') {
       res.status(statusCode).json(customBody)
@@ -136,18 +117,44 @@ app.all('/:code', async (req, res, next) => {
     return
   }
 
-  // Always respond with JSON if no custom body
   res.status(statusCode).json({
     code: statusCode,
     requestedCode,
-    description: res.statusMessage || '',
+    description,
     definition,
-    details: getStatusDescription(statusCode),
-    mdn: getMDNLink(statusCode),
+    details: definition,
+    mdn,
     startTime,
     replyTime,
     duration_in_ms,
     duration_in_seconds,
+  })
+}
+
+// Main status code endpoint
+app.all('/:code', async (req, res, next) => {
+  // Skip if this is /random, /echo, /health, /docs, /openapi.json, /openapi.yaml, or root
+  if (
+    [
+      'random',
+      'echo',
+      'health',
+      'docs',
+      'openapi.json',
+      'openapi.yaml',
+      '',
+    ].includes(req.params.code)
+  )
+    return next()
+
+  const { code } = req.params
+  const statusCode = Number(code)
+  await handleStatusResponse(req, res, {
+    statusCode,
+    requestedCode: code,
+    definition: getStatusDescription(statusCode),
+    description: res.statusMessage || '',
+    mdn: getMDNLink(statusCode),
   })
 })
 
@@ -181,67 +188,18 @@ function parseStatusCodeRange(rangeStr) {
 
 // /random/:range endpoint
 app.all('/random/:range', async (req, res) => {
-  const startTimeObj = new Date()
-  const startTime = startTimeObj.toISOString()
   const { range } = req.params
-  const { sleep, body: bodyParam } = req.query
   const codes = parseStatusCodeRange(range)
-
   if (!codes.length) {
     return res.status(400).send('Invalid range for random status codes')
   }
-
-  // Pick a random code
   const statusCode = codes[Math.floor(Math.random() * codes.length)]
-  const requestedCode = range // as string
-  const definition = getStatusDescription(statusCode)
-
-  // Optional delay
-  if (sleep) {
-    const ms = parseInt(sleep, 10)
-    if (!isNaN(ms) && ms > 0) {
-      await new Promise((resolve) => setTimeout(resolve, ms))
-    }
-  }
-
-  // Custom response body
-  let customBody
-  if (bodyParam !== undefined) {
-    customBody = tryParseJSON(bodyParam) ?? bodyParam
-  } else if (
-    ['POST', 'PUT', 'PATCH'].includes(req.method) &&
-    req.body &&
-    Object.keys(req.body).length > 0
-  ) {
-    customBody = req.body
-  }
-
-  // Content negotiation
-  const replyTimeObj = new Date()
-  const replyTime = replyTimeObj.toISOString()
-  const duration_in_ms = replyTimeObj - startTimeObj // ms
-  const duration_in_seconds = duration_in_ms / 1000
-  if (customBody !== undefined) {
-    if (typeof customBody === 'object') {
-      res.status(statusCode).json(customBody)
-    } else {
-      res.status(statusCode).type('text/plain').send(String(customBody))
-    }
-    return
-  }
-
-  // Always respond with JSON if no custom body
-  res.status(statusCode).json({
-    code: statusCode,
-    requestedCode,
+  await handleStatusResponse(req, res, {
+    statusCode,
+    requestedCode: range,
+    definition: getStatusDescription(statusCode),
     description: res.statusMessage || '',
-    definition,
-    details: getStatusDescription(statusCode),
     mdn: getMDNLink(statusCode),
-    startTime,
-    replyTime,
-    duration_in_ms,
-    duration_in_seconds,
   })
 })
 
@@ -282,8 +240,13 @@ app.get('/redirect/:code', (req, res) => {
 
 // Serve OpenAPI docs
 const openapiDocument = YAML.load('./openapi.yaml')
-const actualPort = PORT
-openapiDocument.servers = [{ url: `http://localhost:${actualPort}` }]
+const domain = process.env.DOMAIN
+const openapiServerUrl = domain
+  ? domain.endsWith('/')
+    ? domain.slice(0, -1)
+    : domain
+  : `http://localhost:${PORT}`
+openapiDocument.servers = [{ url: openapiServerUrl }]
 app.use(
   '/docs',
   swaggerUi.serve,
