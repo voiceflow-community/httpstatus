@@ -268,6 +268,18 @@ app.use(
   })
 )
 
+// Serve OpenAPI spec as JSON
+app.get('/openapi.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  res.send(JSON.stringify(openapiDocument, null, 2))
+})
+
+// Serve OpenAPI spec as YAML
+app.get('/openapi.yaml', (req, res) => {
+  res.setHeader('Content-Type', 'text/yaml')
+  res.send(YAML.stringify(openapiDocument, 10, 2))
+})
+
 // Add X-Robots-Tag header to all responses
 app.use((req, res, next) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow')
