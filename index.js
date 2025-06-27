@@ -6,6 +6,8 @@ const rateLimit = require('express-rate-limit')
 const swaggerUi = require('swagger-ui-express')
 const YAML = require('yamljs')
 
+app.set('trust proxy', 1) // Trust first proxy (for Coolify, Heroku, Docker, etc.)
+
 app.use(express.json()) // For parsing JSON bodies
 app.use(express.urlencoded({ extended: true })) // For parsing URL-encoded bodies
 
