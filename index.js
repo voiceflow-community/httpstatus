@@ -1,5 +1,6 @@
 require('dotenv').config()
 const express = require('express')
+const escape = require('escape-html')
 const app = express()
 const PORT = process.env.PORT || 3000
 const rateLimit = require('express-rate-limit')
@@ -112,7 +113,7 @@ async function handleStatusResponse(req, res, options) {
     if (typeof customBody === 'object') {
       res.status(statusCode).json(customBody)
     } else {
-      res.status(statusCode).type('text/plain').send(String(customBody))
+      res.status(statusCode).type('text/plain').send(escape(String(customBody)))
     }
     return
   }
